@@ -2,49 +2,52 @@ pipeline {
     agent any
 
     environment {
-        NAMESPACE = "dev"
+        PATH = "/opt/homebrew/bin:${env.PATH}"
+    }
+
+    options {
+        timestamps()
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
+                echo "Checking out source code..."
                 checkout scm
+            }
+        }
+
+        stage('Verify kubectl') {
+            steps {
+                echo "Verifying kubectl installation..."
+                sh 'which kubectl'
+                sh 'kubectl version --client'
             }
         }
 
         stage('Validate Kubernetes Manifests') {
             steps {
-                sh 'kubectl apply --dry-run=client -f k8s/'
+                echo "Validating Kubernetes YAML files..."
+                sh 'kubectl apply --dry-run=client -f .'
             }
         }
 
-        stage('Trivy Image Scan') {
+        stage('Cluster Info (Optional)') {
             steps {
-                sh 'trivy image nginx:1.25 || true'
+                echo "Checking cluster connectivity..."
+                sh 'kubectl cluster-info'
             }
         }
 
-        stage('Deploy to Kind Cluster') {
-            steps {
-                sh 'kubectl apply -f k8s/'
-            }
-        }
-
-        stage('Verify Rollout') {
-            steps {
-                sh 'kubectl rollout status deployment/backend -n ${NAMESPACE}'
-                sh 'kubectl get pods -n ${NAMESPACE}'
-            }
-        }
     }
 
     post {
         success {
-            echo 'Deployment Successful'
+            echo 'Pipeline executed successfully'
         }
         failure {
-            echo 'Deployment Failed'
+            echo 'Pipeline failed Check logs above.'
         }
     }
 }
