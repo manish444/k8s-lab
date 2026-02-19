@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+
+    environment {
+        NAMESPACE = "dev"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Validate Kubernetes Manifests') {
+            steps {
+                sh 'kubectl apply --dry-run=client -f k8s/'
+            }
+        }
+
+        stage('Trivy Image Scan') {
+            steps {
+                sh 'trivy image nginx:1.25 || true'
+            }
+        }
+
+        stage('Deploy to Kind Cluster') {
+            steps {
+                sh 'kubectl apply -f k8s/'
+            }
+        }
+
+        stage('Verify Rollout') {
+            steps {
+                sh 'kubectl rollout status deployment/backend -n ${NAMESPACE}'
+                sh 'kubectl get pods -n ${NAMESPACE}'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Deployment Successful'
+        }
+        failure {
+            echo 'Deployment Failed'
+        }
+    }
+}
+
