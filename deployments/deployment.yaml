@@ -20,6 +20,8 @@ spec:
       labels:
         app: backend
     spec:
+      nodeSelector:
+        node-type: backend
       tolerations:
       - key: "dedicated"
         operator: "Equal"
