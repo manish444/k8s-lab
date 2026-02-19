@@ -29,7 +29,7 @@ pipeline {
         stage('Validate Kubernetes Manifests') {
             steps {
                 echo "Validating Kubernetes YAML files..."
-                sh 'kubectl apply --dry-run=client -f .'
+                sh 'kubectl apply --dry-run=client -R -f .'
             }
         }
 
