@@ -20,6 +20,11 @@ spec:
       labels:
         app: backend
     spec:
+      tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "backend"
+        effect: "NoSchedule"
       containers:
       - name: backend
         image: nginx:1.26
